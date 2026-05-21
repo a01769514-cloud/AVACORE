@@ -3,130 +3,491 @@
   "nodes": [
     {
       "parameters": {
-        "path": "telegram-webhook",
-        "options": {
-          "events": [
-            "message"
-          ]
-        }
+        "updates": ["message"],
+        "options": {}
       },
       "id": "Telegram_Webhook",
       "name": "Telegram_Webhook",
       "type": "n8n-nodes-base.telegramTrigger",
-      "typeVersion": 1,
-      "position": [
-        100,
-        400
-      ]
+      "typeVersion": 1.1,
+      "position": [100, 400],
+      "webhookId": "ava-telegram-hook"
     },
     {
       "parameters": {
-        "operation": "query",
+        "operation": "read",
         "documentId": {
-          "mode": "list",
-          "value": ""
+          "mode": "id",
+          "value": "={{ $env.SPREADSHEET_ID }}"
         },
-        "doc": "1h5P5c_-y9r7mKwzX-2b5c5d5e5f5g5h5i",
-        "range": "Leads!A:H",
-        "options": {
-          "largeData": false,
-          "useFirstRowAsHeaders": true
-        }
+        "sheetName": {
+          "mode": "name",
+          "value": "Leads"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "lead_id",
+              "lookupValue": "={{ $json.message.chat.id }}"
+            }
+          ]
+        },
+        "options": {}
       },
       "id": "Sheets_Leads_Lookup",
       "name": "Sheets_Leads_Lookup",
       "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 3,
-      "position": [
-        300,
-        200
-      ],
+      "typeVersion": 4.5,
+      "position": [320, 400],
       "credentials": {
-        "googleSheetsOAuth2": "Google_Sheets_Auth"
+        "googleSheetsOAuth2Api": {
+          "id": "Google_Sheets_Auth",
+          "name": "Google Sheets Auth"
+        }
       }
     },
     {
       "parameters": {
-        "operation": "filter",
-        "simple": true,
-        "conditions": {
-          "options": [
-            {
-              "key": "lead_id",
-              "condition": "equals",
-              "value": "={{$node[\"Telegram_Webhook\"].json.message.chat.id}}"
-            }
-          ]
-        }
-      },
-      "id": "Filter_Existing_Lead",
-      "name": "Filter_Existing_Lead",
-      "type": "n8n-nodes-base.filter",
-      "typeVersion": 1,
-      "position": [
-        500,
-        200
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// INCRUSTADO: Código JavaScript de la máquina de estados (ava_state_machine.js)\n\nconst MONTHS = {\n  'enero':0,'febrero':1,'marzo':2,'abril':3,'mayo':4,'junio':5,\n  'julio':6,'agosto':7,'septiembre':8,'octubre':9,'noviembre':10,'diciembre':11,\n  'ene':0,'feb':1,'mar':2,'abr':3,'may':4,'jun':5,\n  'jul':6,'ago':7,'sep':8,'oct':9,'nov':10,'dic':11\n};\n\nconst PROFILE_MAP = {\n  '1': 'Arquitecto/Diseñador',\n  '2': 'Constructora/Contratista',\n  '3': 'Vidriería/Fachadista'\n};\n\nconst ELEMENT_MAP = {\n  '1': 'Cancel de baño/Regadera',\n  '2': 'Barandales/Balcones',\n  '3': 'Ventanales/Fachadas'\n};\n\nconst STEP_MESSAGES = {\n  0: \"Hola, ¿qué tal? Soy Ava y hoy tengo el placer de atender tu proyecto de vidrio templado.\\n\\nEscribe el número o la opción para darte la atención correcta:\\n\\n1️⃣ Comencemos con mi proyecto\\n2️⃣ Solo quiero información general\",\n  1: \"Para asignar los recursos correctos a tu propuesta, indica qué opción describe mejor tu actividad:\\n\\n1️⃣ Arquitecto o Diseñador\\n2️⃣ Constructora o Contratista\\n3️⃣ Vidriería o Fachadista\\n4️⃣ Otro (describe)\",\n  2: \"Queremos saber qué proyecto tienes en mente.\\n\\nSelecciona una opción y si no está, descríbelo brevemente:\\n\\n1️⃣ Cancel de baño o Regadera\\n2️⃣ Barandales o Balcones\\n3️⃣ Ventanales o Fachadas de vidrio / Proyectos de gran escala\",\n  3: \"¿En qué estado se encuentra la obra o el lugar donde se va a instalar el vidrio?\\n\\n1️⃣ Ya está construido y listo para tomar medidas exactas\\n2️⃣ Está en obra gris o construcción activa, pero ya tenemos las medidas planeadas\\n3️⃣ Todavía no hay construcción física, solo tengo planos o ideas preliminares\",\n  4: \"¿Cuál es tu situación actual para realizar la compra del material?\\n\\n1️⃣ Ya tengo el presupuesto listo y quiero elegir proveedor esta misma semana\\n2️⃣ Estoy comparando opciones y precios para decidir este mes\\n3️⃣ Solo estoy buscando cotizaciones para presupuestar un proyecto a futuro\",\n  5: \"Para coordinar los tiempos de producción en nuestra planta, ¿cuándo necesitas el material en la obra?\\n\\n1️⃣ De inmediato (en menos de dos semanas)\\n2️⃣ Planificado para las próximas semanas de este mes\\n3️⃣ Sin fecha definida, depende de otros avances de la obra\",\n  6: \"Perfecto. El siguiente paso es que te reúnas lo antes posible con uno de nuestros especialistas para definir los detalles técnicos de tu proyecto y proceder con la gestión.\\n\\nIndica tu preferencia:\\n\\n1️⃣ Reunión virtual por Google Meet\\n2️⃣ Reunión presencial en nuestra Planta de Templado\",\n  7: \"¿Qué fecha y hora te acomoda mejor?\\n\\nNuestro horario de atención es de lunes a viernes de 8 am a 5 pm.\\n\\nPor favor escríbela utilizando este formato de ejemplo:\\n\\n📌 29 de abril 10 am\\n\\nEscribe tu propuesta a continuación:\",\n  8: \"Ya he apartado el espacio. ¿A nombre de quién agendo la cita y cómo nos encontraste?\\n\\nPor favor escribe ambos datos en un solo mensaje siguiendo este ejemplo:\\n\\n📌 Juan Pérez, por Google\\n\\nEscribe tu respuesta a continuación:\",\n  9: \"Gracias por tu confianza, {first_name}. Mi trabajo ha terminado aquí. El mayor de los éxitos con tu proyecto.\\n\\nSi en el futuro necesitas gestionar tu cita, selecciona una opción:\\n\\n1️⃣ Iniciar la revisión de un nuevo proyecto\\n2️⃣ Reagendar mi cita actual\\n3️⃣ Cancelar mi cita\",\n  10: \"Entendido, procedamos a reagendar tu espacio.\\n\\nIndica el formato que prefieres para esta nueva sesión:\\n\\n1️⃣ Reunión virtual por Google Meet\\n2️⃣ Reunión presencial en nuestra Planta de Templado\",\n  11: \"¿Qué nueva fecha y hora te acomodan mejor?\\n\\nRecuerda nuestro horario de lunes a viernes de 8 am a 5 pm.\\n\\nPor favor escríbela utilizando este formato de ejemplo:\\n\\n📌 15 de mayo 3 pm\\n\\nEscribe tu nueva propuesta a continuación:\",\n  12: \"Para validar y actualizar el registro de la nueva cita en nuestro sistema:\\n\\nPor favor escribe tu nombre y apellido:\",\n  13: \"Comprendo la situación. Para ayudarnos a mejorar nuestros procesos en la planta, indica el motivo principal de tu cancelación seleccionando una opción:\\n\\n1️⃣ Encontré un mejor proveedor\\n2️⃣ El proceso es muy tardado\\n3️⃣ Ya no puedo asistir\",\n  14: \"Tu cita ha sido cancelada y los registros correspondientes han sido actualizados en nuestro sistema.\\n\\nSi deseas reactivar la atención o revisar un nuevo proyecto en el futuro:\\n\\nEscribe la palabra 'Inicio' o el número 1️⃣ en cualquier momento para comenzar de nuevo. Que tengas un excelente día.\"\n};\n\nconst FORCE_REPLIES = {\n  0:  \"Para iniciar la atención de manera correcta, es necesario que selecciones una de las dos opciones disponibles ingresando el número o el texto correspondiente.\",\n  1:  \"Por favor, indica tu perfil comercial seleccionando un número del 1️⃣ al 4️⃣ o escribiendo tu categoría correspondiente.\",\n  3:  \"Para validar la viabilidad de la instalación, selecciona una de las 3 opciones numéricas o describe brevemente el estado actual de tu espacio.\",\n  4:  \"Por favor, indícanos tu estatus comercial seleccionando una de las 3 opciones del menú para continuar.\",\n  5:  \"Necesitamos conocer los tiempos de tu obra para programar la producción. Por favor, selecciona una opción válida del 1️⃣ al 3️⃣.\",\n  6:  \"Por favor, define el formato de tu reunión ingresando 1️⃣ para sesión virtual o 2️⃣ para asistencia presencial en nuestra planta.\",\n  '7_format':   \"El formato de fecha o el rango propuesto no es válido. Recuerda que nuestro horario es de lunes a viernes de 8 am a 5 pm, dentro de las próximas 4 semanas. Por favor intenta de nuevo siguiendo este ejemplo:\\n\\n📌 29 de abril 10 am\",\n  '7_conflict': \"El espacio solicitado se encuentra ocupado. Te comparto 3 opciones disponibles cercanas:\\n\\n{SLOTS}\\n\\nPor favor, escribe tu opción preferida utilizando el formato del ejemplo.\",\n  8:  \"Para finalizar la asignación del espacio, es indispensable que nos indiques tu nombre completo y el medio por el cual nos encontraste. Sigue el ejemplo:\\n\\n📌 Juan Pérez, por Google\",\n  9:  \"Comando no reconocido. Para gestionar tu cita actual o iniciar un nuevo proyecto, por favor marca exclusivamente 1️⃣, 2️⃣ o 3️⃣.\",\n  10: \"Por favor, define el formato de tu reunión ingresando 1️⃣ para sesión virtual o 2️⃣ para asistencia presencial en nuestra planta.\",\n  12: \"Por favor, escribe el nombre y apellido registrado originalmente para validar tu identidad y actualizar el bloque del calendario.\",\n  13: \"Tu opinión es muy importante para optimizar nuestra planta. Por favor selecciona el número del motivo de tu cancelación para concluir el proceso.\"\n};\n\nconst DISQUALIFICATION_MESSAGE =\n  \"Gracias por tu interés en nuestros productos. Después de revisar los detalles de tu proyecto, en este momento no contamos con las condiciones necesarias para proceder con una gestión formal en nuestra planta.\\n\\nTe invitamos a comunicarte con nosotros nuevamente cuando tu proyecto cuente con construcción activa, presupuesto definido y fechas establecidas. Estaremos encantados de atenderte.\\n\\nEscribe la palabra 'Inicio' o el número 1️⃣ en cualquier momento para comenzar de nuevo. ¡Que tengas un excelente día!\";\n\nconst INFO_GENERAL_MESSAGE =\n  \"Con gusto te brindamos información sobre nuestros productos de vidrio templado. Fabricamos cancelería de baño, barandales, ventanales y fachadas de vidrio con los más altos estándares de calidad y seguridad.\\n\\nSi en el futuro deseas iniciar un proyecto formal, escribe la palabra 'Inicio' o el número 1️⃣ en cualquier momento. ¡Que tengas un excelente día!\";\n\nfunction generateUUID() {\n  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {\n    var r = Math.random() * 16 | 0;\n    var v = c === 'x' ? r : (r & 0x3 | 0x8);\n    return v.toString(16);\n  });\n}\n\nfunction normalize(str) {\n  if (!str) return '';\n  return String(str)\n    .toLowerCase()\n    .normalize('NFD')\n    .replace(/[̀-ͯ]/g, '')\n    .trim();\n}\n\nfunction parseSpanishDate(text, today) {\n  var norm = normalize(text);\n  var dayMatch = norm.match(/\\b(\\d{1,2})\\b/);\n  if (!dayMatch) return { valid: false, reason: 'format' };\n  var day = parseInt(dayMatch[1], 10);\n  var foundMonth = -1;\n  var monthKeys = Object.keys(MONTHS).sort(function(a,b){ return b.length - a.length; });\n  for (var i = 0; i < monthKeys.length; i++) {\n    if (norm.indexOf(monthKeys[i]) !== -1) {\n      foundMonth = MONTHS[monthKeys[i]];\n      break;\n    }\n  }\n  if (foundMonth === -1) return { valid: false, reason: 'format' };\n  var allNums = norm.match(/\\d+/g) || [];\n  var hour = -1;\n  for (var j = 0; j < allNums.length; j++) {\n    var n = parseInt(allNums[j], 10);\n    if (n >= 1 && n <= 24 && n !== day) {\n      hour = n;\n      break;\n    }\n  }\n  if (hour === -1) {\n    if (allNums.length >= 2) {\n      hour = parseInt(allNums[1], 10);\n    } else {\n      return { valid: false, reason: 'format' };\n    }\n  }\n  var hasPm = /\\bpm\\b/.test(norm);\n  var hasAm = /\\bam\\b/.test(norm);\n  if (hasPm && hour < 12) hour += 12;\n  if (hasAm && hour === 12) hour = 0;\n  if (!hasPm && !hasAm && hour < 8) hour += 12;\n  var year = today.getFullYear();\n  var candidate = new Date(year, foundMonth, day, hour, 0, 0, 0);\n  if (candidate.getMonth() !== foundMonth) return { valid: false, reason: 'format' };\n  var todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);\n  if (candidate < todayMidnight) {\n    candidate = new Date(year + 1, foundMonth, day, hour, 0, 0, 0);\n    if (candidate.getMonth() !== foundMonth) return { valid: false, reason: 'format' };\n  }\n  var maxDate = new Date(todayMidnight.getTime() + 28 * 24 * 60 * 60 * 1000);\n  maxDate.setHours(23, 59, 59, 999);\n  var candidateMidnight = new Date(candidate.getFullYear(), candidate.getMonth(), candidate.getDate(), 0, 0, 0, 0);\n  if (candidateMidnight < todayMidnight || candidateMidnight > maxDate) {\n    return { valid: false, reason: 'range' };\n  }\n  var dow = candidate.getDay();\n  if (dow === 0 || dow === 6) return { valid: false, reason: 'weekend' };\n  if (hour < 8 || hour > 17) return { valid: false, reason: 'hours' };\n  return { valid: true, dateObj: candidate, isoString: candidate.toISOString() };\n}\n\nfunction parseAttribution(text) {\n  if (!text || !text.trim()) return null;\n  var norm = normalize(text);\n  var anchors = [',', ' desde ', ' por ', ' de '];\n  var anchorPos = -1;\n  var anchorLen = 0;\n  for (var i = 0; i < anchors.length; i++) {\n    var idx = norm.indexOf(anchors[i]);\n    if (idx !== -1) {\n      anchorPos = idx;\n      anchorLen = anchors[i].length;\n      break;\n    }\n  }\n  var fullName, leadSource;\n  if (anchorPos !== -1) {\n    fullName   = text.slice(0, anchorPos).trim();\n    leadSource = text.slice(anchorPos + anchorLen).trim();\n  } else {\n    fullName   = text.trim();\n    leadSource = 'No especificado';\n  }\n  if (!fullName) return null;\n  var firstName = fullName.split(/\\s+/)[0];\n  return { fullName: fullName, firstName: firstName, leadSource: leadSource || 'No especificado' };\n}\n\nfunction buildForceReply(state, msg) {\n  return [{\n    json: {\n      chat_id: state.chat_id,\n      lead_id: state.lead_id,\n      project_id: state.project_id,\n      meeting_id: state.meeting_id,\n      brief_id: state.brief_id,\n      current_step: state.current_step,\n      step3_score: state.step3_score,\n      step4_score: state.step4_score,\n      step5_score: state.step5_score,\n      first_name: state.first_name,\n      full_name: state.full_name,\n      profile: state.profile,\n      profile_custom_desc: state.profile_custom_desc,\n      element: state.element,\n      custom_project_description: state.custom_project_description,\n      meeting_type: state.meeting_type,\n      proposed_datetime: state.proposed_datetime,\n      meeting_status: state.meeting_status,\n      conversation_status: state.conversation_status,\n      project_status: state.project_status,\n      lead_source: state.lead_source,\n      cancellation_reason: state.cancellation_reason,\n      calendar_conflict: state.calendar_conflict,\n      available_slots: state.available_slots,\n      update_calendar_event: state.update_calendar_event || false,\n      delete_old_brief_email: state.delete_old_brief_email || false,\n      reply_text: msg,\n      force_reply: true\n    }\n  }];\n}\n\nfunction buildAdvance(state, nextStep, replyText) {\n  return [{\n    json: {\n      chat_id: state.chat_id,\n      lead_id: state.lead_id,\n      project_id: state.project_id,\n      meeting_id: state.meeting_id,\n      brief_id: state.brief_id,\n      current_step: nextStep,\n      step3_score: state.step3_score,\n      step4_score: state.step4_score,\n      step5_score: state.step5_score,\n      first_name: state.first_name,\n      full_name: state.full_name,\n      profile: state.profile,\n      profile_custom_desc: state.profile_custom_desc,\n      element: state.element,\n      custom_project_description: state.custom_project_description,\n      meeting_type: state.meeting_type,\n      proposed_datetime: state.proposed_datetime,\n      meeting_status: state.meeting_status,\n      conversation_status: state.conversation_status,\n      project_status: state.project_status,\n      lead_source: state.lead_source,\n      cancellation_reason: state.cancellation_reason,\n      calendar_conflict: state.calendar_conflict,\n      available_slots: state.available_slots,\n      update_calendar_event: state.update_calendar_event || false,\n      delete_old_brief_email: state.delete_old_brief_email || false,\n      reply_text: replyText,\n      force_reply: false\n    }\n  }];\n}\n\nfunction handleStep0(state) {\n  var isNew = !state.lead_id || state.lead_id === '';\n  if (isNew) {\n    state.lead_id             = String(state.chat_id);\n    state.project_id          = generateUUID();\n    state.meeting_id          = generateUUID();\n    state.conversation_status = 'Active';\n    return buildAdvance(state, 0, STEP_MESSAGES[0]);\n  }\n  var t = normalize(state.inbound_text);\n  var opt1 = t === '1' || t.indexOf('comencemos') !== -1 || t.indexOf('proyecto') !== -1;\n  var opt2 = t === '2' || t.indexOf('informacion') !== -1 || t.indexOf('general') !== -1;\n  if (opt1) {\n    return buildAdvance(state, 1, STEP_MESSAGES[1]);\n  }\n  if (opt2) {\n    state.conversation_status = 'Completed';\n    return buildAdvance(state, 0, INFO_GENERAL_MESSAGE);\n  }\n  return buildForceReply(state, FORCE_REPLIES[0]);\n}\n\nfunction handleStep1(state) {\n  var t  = normalize(state.inbound_text);\n  var raw = state.inbound_text.trim();\n  var profileKeywords = {\n    '1': ['arquitecto','disenador','diseñador'],\n    '2': ['constructora','contratista'],\n    '3': ['vidrieria','vidriería','fachadista'],\n    '4': ['otro']\n  };\n  var matched = null;\n  if (t === '1' || t === '2' || t === '3' || t === '4') {\n    matched = t;\n  } else {\n    var keys = Object.keys(profileKeywords);\n    for (var i = 0; i < keys.length; i++) {\n      var kws = profileKeywords[keys[i]];\n      for (var j = 0; j < kws.length; j++) {\n        if (t.indexOf(kws[j]) !== -1) { matched = keys[i]; break; }\n      }\n      if (matched) break;\n    }\n  }\n  if (!matched) return buildForceReply(state, FORCE_REPLIES[1]);\n  if (matched === '4') {\n    state.profile             = 'Otro';\n    state.profile_custom_desc = raw;\n  } else {\n    state.profile             = PROFILE_MAP[matched];\n    state.profile_custom_desc = null;\n  }\n  return buildAdvance(state, 2, STEP_MESSAGES[2]);\n}\n\nfunction handleStep2(state) {\n  var t   = normalize(state.inbound_text);\n  var raw = state.inbound_text.trim();\n  if (!raw) return buildForceReply(state, \"Por favor, describe brevemente el proyecto que tienes en mente o selecciona una de las opciones del menú.\");\n  var elementKeywords = {\n    '1': ['cancel','bano','baño','regadera','ducha'],\n    '2': ['barandal','balcon','balcón','escalera'],\n    '3': ['ventanal','fachada','vidrio','gran escala','proyecto grande']\n  };\n  var matched = null;\n  if (t === '1' || t === '2' || t === '3') {\n    matched = t;\n  } else {\n    var keys = Object.keys(elementKeywords);\n    for (var i = 0; i < keys.length; i++) {\n      var kws = elementKeywords[keys[i]];\n      for (var j = 0; j < kws.length; j++) {\n        if (t.indexOf(kws[j]) !== -1) { matched = keys[i]; break; }\n      }\n      if (matched) break;\n    }\n  }\n  if (matched) {\n    state.element                    = ELEMENT_MAP[matched];\n    state.custom_project_description = null;\n  } else {\n    state.element                    = 'Personalizado';\n    state.custom_project_description = raw;\n  }\n  return buildAdvance(state, 3, STEP_MESSAGES[3]);\n}\n\nfunction handleStep3(state) {\n  var t = normalize(state.inbound_text);\n  var score = 0;\n  if (t === '1' || t.indexOf('construido') !== -1 || t.indexOf('exactas') !== -1) {\n    score = 1;\n  } else if (t === '2' || t.indexOf('obra gris') !== -1 || t.indexOf('activa') !== -1 || t.indexOf('planeadas') !== -1) {\n    score = 2;\n  } else if (t === '3' || t.indexOf('no hay') !== -1 || t.indexOf('planos') !== -1 || t.indexOf('preliminares') !== -1) {\n    score = 3;\n  }\n  if (!score) return buildForceReply(state, FORCE_REPLIES[3]);\n  state.step3_score = score;\n  return buildAdvance(state, 4, STEP_MESSAGES[4]);\n}\n\nfunction handleStep4(state) {\n  var t = normalize(state.inbound_text);\n  var score = 0;\n  if (t === '1' || t.indexOf('presupuesto') !== -1 || t.indexOf('proveedor') !== -1 || t.indexOf('semana') !== -1) {\n    score = 1;\n  } else if (t === '2' || t.indexOf('comparando') !== -1 || t.indexOf('opciones') !== -1 || t.indexOf('mes') !== -1) {\n    score = 2;\n  } else if (t === '3' || t.indexOf('cotizaciones') !== -1 || t.indexOf('futuro') !== -1 || t.indexOf('presupuestar') !== -1) {\n    score = 3;\n  }\n  if (!score) return buildForceReply(state, FORCE_REPLIES[4]);\n  state.step4_score = score;\n  return buildAdvance(state, 5, STEP_MESSAGES[5]);\n}\n\nfunction handleStep5(state) {\n  var t = normalize(state.inbound_text);\n  var score = 0;\n  if (t === '1' || t.indexOf('inmediato') !== -1 || t.indexOf('dos semanas') !== -1) {\n    score = 1;\n  } else if (t === '2' || t.indexOf('planificado') !== -1 || t.indexOf('proximas') !== -1 || t.indexOf('próximas') !== -1) {\n    score = 2;\n  } else if (t === '3' || t.indexOf('sin fecha') !== -1 || t.indexOf('definida') !== -1 || t.indexOf('avances') !== -1) {\n    score = 3;\n  }\n  if (!score) return buildForceReply(state, FORCE_REPLIES[5]);\n  state.step5_score = score;\n  var s3 = parseInt(state.step3_score, 10);\n  var s4 = parseInt(state.step4_score, 10);\n  var s5 = score;\n  if (s3 === 3 && s4 === 3 && s5 === 3) {\n    state.project_status      = 'Unqualified';\n    state.conversation_status = 'Completed';\n    return buildAdvance(state, 5, DISQUALIFICATION_MESSAGE);\n  }\n  state.project_status = 'Qualified';\n  return buildAdvance(state, 6, STEP_MESSAGES[6]);\n}\n\nfunction handleStep6(state) {\n  var t = normalize(state.inbound_text);\n  var matched = null;\n  if (t === '1' || t.indexOf('virtual') !== -1 || t.indexOf('meet') !== -1) {\n    matched = 'Virtual';\n  } else if (t === '2' || t.indexOf('presencial') !== -1 || t.indexOf('planta') !== -1) {\n    matched = 'Presencial';\n  }\n  if (!matched) return buildForceReply(state, FORCE_REPLIES[6]);\n  state.meeting_type = matched;\n  return buildAdvance(state, 7, STEP_MESSAGES[7]);\n}\n\nfunction handleStep7(state) {\n  var today  = new Date();\n  var parsed = parseSpanishDate(state.inbound_text, today);\n  if (!parsed.valid) {\n    return buildForceReply(state, FORCE_REPLIES['7_format']);\n  }\n  if (state.calendar_conflict === true || state.calendar_conflict === 'true') {\n    var slots   = (state.available_slots || []).slice(0, 3);\n    var slotStr = slots.map(function(s, i) { return (i+1) + '️⃣ ' + s; }).join('\\n');\n    var msg     = FORCE_REPLIES['7_conflict'].replace('{SLOTS}', slotStr);\n    return buildForceReply(state, msg);\n  }\n  state.proposed_datetime = parsed.isoString;\n  return buildAdvance(state, 8, STEP_MESSAGES[8]);\n}\n\nfunction handleStep8(state) {\n  var raw    = state.inbound_text.trim();\n  var parsed = parseAttribution(raw);\n  if (!parsed) return buildForceReply(state, FORCE_REPLIES[8]);\n  state.full_name           = parsed.fullName;\n  state.first_name          = parsed.firstName;\n  state.lead_source         = parsed.leadSource;\n  state.brief_id            = generateUUID();\n  state.conversation_status = 'Completed';\n  state.meeting_status      = 'Scheduled';\n  var msg = STEP_MESSAGES[9].replace('{first_name}', state.first_name || 'cliente');\n  return buildAdvance(state, 9, msg);\n}\n\nfunction handleStep9(state) {\n  var t = normalize(state.inbound_text);\n  if (t === '1' || t.indexOf('nuevo proyecto') !== -1) {\n    state.current_step        = 0;\n    state.conversation_status = 'Active';\n    state.project_id          = generateUUID();\n    state.meeting_id          = generateUUID();\n    state.project_status      = null;\n    state.brief_id            = null;\n    state.meeting_type        = null;\n    state.step3_score         = null;\n    state.step4_score         = null;\n    state.step5_score         = null;\n    state.proposed_datetime   = null;\n    state.cancellation_reason = null;\n    state.update_calendar_event  = false;\n    state.delete_old_brief_email = false;\n    return buildAdvance(state, 0, STEP_MESSAGES[0]);\n  }\n  if (t === '2' || t.indexOf('reagendar') !== -1) {\n    return buildAdvance(state, 10, STEP_MESSAGES[10]);\n  }\n  if (t === '3' || t.indexOf('cancelar') !== -1) {\n    return buildAdvance(state, 13, STEP_MESSAGES[13]);\n  }\n  return buildForceReply(state, FORCE_REPLIES[9]);\n}\n\nfunction handleStep10(state) {\n  var t = normalize(state.inbound_text);\n  var matched = null;\n  if (t === '1' || t.indexOf('virtual') !== -1 || t.indexOf('meet') !== -1) {\n    matched = 'Virtual';\n  } else if (t === '2' || t.indexOf('presencial') !== -1 || t.indexOf('planta') !== -1) {\n    matched = 'Presencial';\n  }\n  if (!matched) return buildForceReply(state, FORCE_REPLIES[10]);\n  state.meeting_type = matched;\n  return buildAdvance(state, 11, STEP_MESSAGES[11]);\n}\n\nfunction handleStep11(state) {\n  var today  = new Date();\n  var parsed = parseSpanishDate(state.inbound_text, today);\n  if (!parsed.valid) {\n    return buildForceReply(state, FORCE_REPLIES['7_format']);\n  }\n  if (state.calendar_conflict === true || state.calendar_conflict === 'true') {\n    var slots   = (state.available_slots || []).slice(0, 3);\n    var slotStr = slots.map(function(s, i) { return (i+1) + '️⃣ ' + s; }).join('\\n');\n    var msg     = FORCE_REPLIES['7_conflict'].replace('{SLOTS}', slotStr);\n    return buildForceReply(state, msg);\n  }\n  state.proposed_datetime = parsed.isoString;\n  return buildAdvance(state, 12, STEP_MESSAGES[12]);\n}\n\nfunction handleStep12(state) {\n  var raw = state.inbound_text.trim();\n  if (!raw) return buildForceReply(state, FORCE_REPLIES[12]);\n  state.brief_id               = generateUUID();\n  state.update_calendar_event  = true;\n  state.delete_old_brief_email = true;\n  state.meeting_status         = 'Rescheduled';\n  var msg = STEP_MESSAGES[9].replace('{first_name}', state.first_name || 'cliente');\n  return buildAdvance(state, 9, msg);\n}\n\nfunction handleStep13(state) {\n  var t   = normalize(state.inbound_text);\n  var raw = state.inbound_text.trim();\n  var matched = null;\n  if (t === '1' || t.indexOf('proveedor') !== -1 || t.indexOf('mejor') !== -1) {\n    matched = 'Encontré un mejor proveedor';\n  } else if (t === '2' || t.indexOf('tardado') !== -1 || t.indexOf('proceso') !== -1) {\n    matched = 'El proceso es muy tardado';\n  } else if (t === '3' || t.indexOf('asistir') !== -1 || t.indexOf('no puedo') !== -1) {\n    matched = 'Ya no puedo asistir';\n  }\n  if (!matched) return buildForceReply(state, FORCE_REPLIES[13]);\n  state.cancellation_reason = matched;\n  return buildAdvance(state, 14, STEP_MESSAGES[14]);\n}\n\nfunction handleStep14(state) {\n  state.meeting_status      = 'Cancelled';\n  state.project_status      = 'Cancelled';\n  state.conversation_status = 'Cancelled';\n  return buildAdvance(state, 14, STEP_MESSAGES[14]);\n}\n\nfunction route(state) {\n  state.inbound_text = (state.inbound_text || '').toString().trim();\n  state.current_step = parseInt(state.current_step, 10) || 0;\n  if (!state.lead_id || state.lead_id === '' || state.lead_id === 'null') {\n    state.lead_id             = String(state.chat_id);\n    state.project_id          = generateUUID();\n    state.meeting_id          = generateUUID();\n    state.conversation_status = 'Active';\n    state.current_step        = 0;\n    return buildAdvance(state, 0, STEP_MESSAGES[0]);\n  }\n  var postFlow = state.conversation_status === 'Completed' ||\n                 state.conversation_status === 'Cancelled';\n  var restartTrigger = normalize(state.inbound_text) === 'inicio' ||\n                       state.inbound_text === '1';\n  if (postFlow && restartTrigger) {\n    state.current_step           = 0;\n    state.conversation_status    = 'Active';\n    state.project_id             = generateUUID();\n    state.meeting_id             = generateUUID();\n    state.project_status         = null;\n    state.brief_id               = null;\n    state.meeting_type           = null;\n    state.step3_score            = null;\n    state.step4_score            = null;\n    state.step5_score            = null;\n    state.proposed_datetime      = null;\n    state.cancellation_reason    = null;\n    state.update_calendar_event  = false;\n    state.delete_old_brief_email = false;\n    return buildAdvance(state, 0, STEP_MESSAGES[0]);\n  }\n  if (postFlow) {\n    var nudge = \"Para reactivar la atención o iniciar un nuevo proyecto, escribe la palabra 'Inicio' o el número 1️⃣ en cualquier momento.\";\n    return buildForceReply(state, nudge);\n  }\n  switch (state.current_step) {\n    case 0:  return handleStep0(state);\n    case 1:  return handleStep1(state);\n    case 2:  return handleStep2(state);\n    case 3:  return handleStep3(state);\n    case 4:  return handleStep4(state);\n    case 5:  return handleStep5(state);\n    case 6:  return handleStep6(state);\n    case 7:  return handleStep7(state);\n    case 8:  return handleStep8(state);\n    case 9:  return handleStep9(state);\n    case 10: return handleStep10(state);\n    case 11: return handleStep11(state);\n    case 12: return handleStep12(state);\n    case 13: return handleStep13(state);\n    case 14: return handleStep14(state);\n    default:\n      state.current_step = 0;\n      state.project_id   = generateUUID();\n      state.meeting_id   = generateUUID();\n      return buildAdvance(state, 0, STEP_MESSAGES[0]);\n  }\n}\n\n// ENTRY POINT\nvar item  = $input.first();\nvar inboundPayload = item.json;\ninboundPayload.chat_id = {{$node[\"Telegram_Webhook\"].json.message.chat.id}};\ninboundPayload.inbound_text = {{$node[\"Telegram_Webhook\"].json.message.text}};\nif ($node[\"Filter_Existing_Lead\"].json.length > 0) {\n  var leadRecord = $node[\"Filter_Existing_Lead\"].json[0];\n  inboundPayload.lead_id = leadRecord.lead_id || null;\n  inboundPayload.current_step = leadRecord.current_step || 0;\n  inboundPayload.conversation_status = leadRecord.conversation_status || 'Active';\n} else {\n  inboundPayload.lead_id = null;\n  inboundPayload.current_step = 0;\n}\nreturn route(inboundPayload);"
+        "jsCode": "// ─── ZONA B: CONSTANTES ────────────────────────────────────────────────────\n\nconst MONTHS = {\n  'enero':0,'febrero':1,'marzo':2,'abril':3,'mayo':4,'junio':5,\n  'julio':6,'agosto':7,'septiembre':8,'octubre':9,'noviembre':10,'diciembre':11,\n  'ene':0,'feb':1,'mar':2,'abr':3,'may':4,'jun':5,\n  'jul':6,'ago':7,'sep':8,'oct':9,'nov':10,'dic':11\n};\n\nconst PROFILE_MAP = {\n  '1': 'Arquitecto/Diseñador',\n  '2': 'Constructora/Contratista',\n  '3': 'Vidriería/Fachadista'\n};\n\nconst ELEMENT_MAP = {\n  '1': 'Cancel de baño/Regadera',\n  '2': 'Barandales/Balcones',\n  '3': 'Ventanales/Fachadas'\n};\n\nconst STEP_MESSAGES = {\n  0: \"Hola, ¿qué tal? Soy Ava y hoy tengo el placer de atender tu proyecto de vidrio templado.\\n\\nEscribe el número o la opción para darte la atención correcta:\\n\\n1️⃣ Comencemos con mi proyecto\\n2️⃣ Solo quiero información general\",\n  1: \"Para asignar los recursos correctos a tu propuesta, indica qué opción describe mejor tu actividad:\\n\\n1️⃣ Arquitecto o Diseñador\\n2️⃣ Constructora o Contratista\\n3️⃣ Vidriería o Fachadista\\n4️⃣ Otro (describe)\",\n  2: \"Queremos saber qué proyecto tienes en mente.\\n\\nSelecciona una opción y si no está, descríbelo brevemente:\\n\\n1️⃣ Cancel de baño o Regadera\\n2️⃣ Barandales o Balcones\\n3️⃣ Ventanales o Fachadas de vidrio / Proyectos de gran escala\",\n  3: \"¿En qué estado se encuentra la obra o el lugar donde se va a instalar el vidrio?\\n\\n1️⃣ Ya está construido y listo para tomar medidas exactas\\n2️⃣ Está en obra gris o construcción activa, pero ya tenemos las medidas planeadas\\n3️⃣ Todavía no hay construcción física, solo tengo planos o ideas preliminares\",\n  4: \"¿Cuál es tu situación actual para realizar la compra del material?\\n\\n1️⃣ Ya tengo el presupuesto listo y quiero elegir proveedor esta misma semana\\n2️⃣ Estoy comparando opciones y precios para decidir este mes\\n3️⃣ Solo estoy buscando cotizaciones para presupuestar un proyecto a futuro\",\n  5: \"Para coordinar los tiempos de producción en nuestra planta, ¿cuándo necesitas el material en la obra?\\n\\n1️⃣ De inmediato (en menos de dos semanas)\\n2️⃣ Planificado para las próximas semanas de este mes\\n3️⃣ Sin fecha definida, depende de otros avances de la obra\",\n  6: \"Perfecto. El siguiente paso es que te reúnas lo antes posible con uno de nuestros especialistas para definir los detalles técnicos de tu proyecto y proceder con la gestión.\\n\\nIndica tu preferencia:\\n\\n1️⃣ Reunión virtual por Google Meet\\n2️⃣ Reunión presencial en nuestra Planta de Templado\",\n  7: \"¿Qué fecha y hora te acomoda mejor?\\n\\nNuestro horario de atención es de lunes a viernes de 8 am a 5 pm.\\n\\nPor favor escríbela utilizando este formato de ejemplo:\\n\\n📌 29 de abril 10 am\\n\\nEscribe tu propuesta a continuación:\",\n  8: \"Ya he apartado el espacio. ¿A nombre de quién agendo la cita y cómo nos encontraste?\\n\\nPor favor escribe ambos datos en un solo mensaje siguiendo este ejemplo:\\n\\n📌 Juan Pérez, por Google\\n\\nEscribe tu respuesta a continuación:\",\n  9: \"Gracias por tu confianza, {first_name}. Mi trabajo ha terminado aquí. El mayor de los éxitos con tu proyecto.\\n\\nSi en el futuro necesitas gestionar tu cita, selecciona una opción:\\n\\n1️⃣ Iniciar la revisión de un nuevo proyecto\\n2️⃣ Reagendar mi cita actual\\n3️⃣ Cancelar mi cita\",\n  10: \"Entendido, procedamos a reagendar tu espacio.\\n\\nIndica el formato que prefieres para esta nueva sesión:\\n\\n1️⃣ Reunión virtual por Google Meet\\n2️⃣ Reunión presencial en nuestra Planta de Templado\",\n  11: \"¿Qué nueva fecha y hora te acomodan mejor?\\n\\nRecuerda nuestro horario de lunes a viernes de 8 am a 5 pm.\\n\\nPor favor escríbela utilizando este formato de ejemplo:\\n\\n📌 15 de mayo 3 pm\\n\\nEscribe tu nueva propuesta a continuación:\",\n  12: \"Para validar y actualizar el registro de la nueva cita en nuestro sistema:\\n\\nPor favor escribe tu nombre y apellido:\",\n  13: \"Comprendo la situación. Para ayudarnos a mejorar nuestros procesos en la planta, indica el motivo principal de tu cancelación seleccionando una opción:\\n\\n1️⃣ Encontré un mejor proveedor\\n2️⃣ El proceso es muy tardado\\n3️⃣ Ya no puedo asistir\",\n  14: \"Tu cita ha sido cancelada y los registros correspondientes han sido actualizados en nuestro sistema.\\n\\nSi deseas reactivar la atención o revisar un nuevo proyecto en el futuro:\\n\\nEscribe la palabra 'Inicio' o el número 1️⃣ en cualquier momento para comenzar de nuevo. Que tengas un excelente día.\"\n};\n\nconst FORCE_REPLIES = {\n  0:  'Para iniciar la atención de manera correcta, es necesario que selecciones una de las dos opciones disponibles ingresando el número o el texto correspondiente.',\n  1:  'Por favor, indica tu perfil comercial seleccionando un número del 1️⃣ al 4️⃣ o escribiendo tu categoría correspondiente.',\n  3:  'Para validar la viabilidad de la instalación, selecciona una de las 3 opciones numéricas o describe brevemente el estado actual de tu espacio.',\n  4:  'Por favor, indícanos tu estatus comercial seleccionando una de las 3 opciones del menú para continuar.',\n  5:  'Necesitamos conocer los tiempos de tu obra para programar la producción. Por favor, selecciona una opción válida del 1️⃣ al 3️⃣.',\n  6:  'Por favor, define el formato de tu reunión ingresando 1️⃣ para sesión virtual o 2️⃣ para asistencia presencial en nuestra planta.',\n  '7_format':   \"El formato de fecha o el rango propuesto no es válido. Recuerda que nuestro horario es de lunes a viernes de 8 am a 5 pm, dentro de las próximas 4 semanas. Por favor intenta de nuevo siguiendo este ejemplo:\\n\\n📌 29 de abril 10 am\",\n  '7_conflict': \"El espacio solicitado se encuentra ocupado. Te comparto 3 opciones disponibles cercanas:\\n\\n{SLOTS}\\n\\nPor favor, escribe tu opción preferida utilizando el formato del ejemplo.\",\n  8:  \"Para finalizar la asignación del espacio, es indispensable que nos indiques tu nombre completo y el medio por el cual nos encontraste. Sigue el ejemplo:\\n\\n📌 Juan Pérez, por Google\",\n  9:  'Comando no reconocido. Para gestionar tu cita actual o iniciar un nuevo proyecto, por favor marca exclusivamente 1️⃣, 2️⃣ o 3️⃣.',\n  10: 'Por favor, define el formato de tu reunión ingresando 1️⃣ para sesión virtual o 2️⃣ para asistencia presencial en nuestra planta.',\n  12: 'Por favor, escribe el nombre y apellido registrado originalmente para validar tu identidad y actualizar el bloque del calendario.',\n  13: 'Tu opinión es muy importante para optimizar nuestra planta. Por favor selecciona el número del motivo de tu cancelación para concluir el proceso.'\n};\n\nconst DISQUALIFICATION_MESSAGE = \"Gracias por tu interés en nuestros productos. Después de revisar los detalles de tu proyecto, en este momento no contamos con las condiciones necesarias para proceder con una gestión formal en nuestra planta.\\n\\nTe invitamos a comunicarte con nosotros nuevamente cuando tu proyecto cuente con construcción activa, presupuesto definido y fechas establecidas. Estaremos encantados de atenderte.\\n\\nEscribe la palabra 'Inicio' o el número 1️⃣ en cualquier momento para comenzar de nuevo. ¡Que tengas un excelente día!\";\n\nconst INFO_GENERAL_MESSAGE = \"Con gusto te brindamos información sobre nuestros productos de vidrio templado. Fabricamos cancelería de baño, barandales, ventanales y fachadas de vidrio con los más altos estándares de calidad y seguridad.\\n\\nSi en el futuro deseas iniciar un proyecto formal, escribe la palabra 'Inicio' o el número 1️⃣ en cualquier momento. ¡Que tengas un excelente día!\";\n\n// ─── ZONA A: UTILIDADES ─────────────────────────────────────────────────────\n\nfunction generateUUID() {\n  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {\n    var r = Math.random() * 16 | 0;\n    var v = c === 'x' ? r : (r & 0x3 | 0x8);\n    return v.toString(16);\n  });\n}\n\nfunction normalize(str) {\n  if (!str) return '';\n  return String(str).toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').trim();\n}\n\nfunction parseSpanishDate(text, today) {\n  var norm = normalize(text);\n  var dayMatch = norm.match(/\\b(\\d{1,2})\\b/);\n  if (!dayMatch) return { valid: false, reason: 'format' };\n  var day = parseInt(dayMatch[1], 10);\n  var foundMonth = -1;\n  var monthKeys = Object.keys(MONTHS).sort(function(a, b) { return b.length - a.length; });\n  for (var i = 0; i < monthKeys.length; i++) {\n    if (norm.indexOf(monthKeys[i]) !== -1) { foundMonth = MONTHS[monthKeys[i]]; break; }\n  }\n  if (foundMonth === -1) return { valid: false, reason: 'format' };\n  var allNums = norm.match(/\\d+/g) || [];\n  var hour = -1;\n  for (var j = 0; j < allNums.length; j++) {\n    var n = parseInt(allNums[j], 10);\n    if (n >= 1 && n <= 24 && n !== day) { hour = n; break; }\n  }\n  if (hour === -1) {\n    if (allNums.length >= 2) { hour = parseInt(allNums[1], 10); } else { return { valid: false, reason: 'format' }; }\n  }\n  var hasPm = /\\bpm\\b/.test(norm);\n  var hasAm = /\\bam\\b/.test(norm);\n  if (hasPm && hour < 12) hour += 12;\n  if (hasAm && hour === 12) hour = 0;\n  if (!hasPm && !hasAm && hour < 8) hour += 12;\n  var year = today.getFullYear();\n  var candidate = new Date(year, foundMonth, day, hour, 0, 0, 0);\n  if (candidate.getMonth() !== foundMonth) return { valid: false, reason: 'format' };\n  var todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);\n  if (candidate < todayMidnight) {\n    candidate = new Date(year + 1, foundMonth, day, hour, 0, 0, 0);\n    if (candidate.getMonth() !== foundMonth) return { valid: false, reason: 'format' };\n  }\n  var maxDate = new Date(todayMidnight.getTime() + 28 * 24 * 60 * 60 * 1000);\n  maxDate.setHours(23, 59, 59, 999);\n  var candidateMidnight = new Date(candidate.getFullYear(), candidate.getMonth(), candidate.getDate(), 0, 0, 0, 0);\n  if (candidateMidnight < todayMidnight || candidateMidnight > maxDate) return { valid: false, reason: 'range' };\n  var dow = candidate.getDay();\n  if (dow === 0 || dow === 6) return { valid: false, reason: 'weekend' };\n  if (hour < 8 || hour > 17) return { valid: false, reason: 'hours' };\n  return { valid: true, dateObj: candidate, isoString: candidate.toISOString() };\n}\n\nfunction parseAttribution(text) {\n  if (!text || !text.trim()) return null;\n  var norm = normalize(text);\n  var anchors = [',', ' desde ', ' por ', ' de '];\n  var anchorPos = -1;\n  var anchorLen = 0;\n  for (var i = 0; i < anchors.length; i++) {\n    var idx = norm.indexOf(anchors[i]);\n    if (idx !== -1) { anchorPos = idx; anchorLen = anchors[i].length; break; }\n  }\n  var fullName, leadSource;\n  if (anchorPos !== -1) {\n    fullName   = text.slice(0, anchorPos).trim();\n    leadSource = text.slice(anchorPos + anchorLen).trim();\n  } else {\n    fullName   = text.trim();\n    leadSource = 'No especificado';\n  }\n  if (!fullName) return null;\n  var firstName = fullName.split(/\\s+/)[0];\n  return { fullName: fullName, firstName: firstName, leadSource: leadSource || 'No especificado' };\n}\n\nfunction buildForceReply(state, msg) {\n  return [{ json: {\n    chat_id: state.chat_id, lead_id: state.lead_id,\n    project_id: state.project_id, meeting_id: state.meeting_id, brief_id: state.brief_id,\n    current_step: state.current_step,\n    step3_score: state.step3_score, step4_score: state.step4_score, step5_score: state.step5_score,\n    first_name: state.first_name, full_name: state.full_name,\n    profile: state.profile, profile_custom_desc: state.profile_custom_desc,\n    element: state.element, custom_project_description: state.custom_project_description,\n    meeting_type: state.meeting_type, proposed_datetime: state.proposed_datetime,\n    meeting_status: state.meeting_status, conversation_status: state.conversation_status,\n    project_status: state.project_status, lead_source: state.lead_source,\n    cancellation_reason: state.cancellation_reason,\n    calendar_conflict: state.calendar_conflict, available_slots: state.available_slots,\n    update_calendar_event: state.update_calendar_event || false,\n    delete_old_brief_email: state.delete_old_brief_email || false,\n    reply_text: msg, force_reply: true\n  }}];\n}\n\nfunction buildAdvance(state, nextStep, replyText) {\n  return [{ json: {\n    chat_id: state.chat_id, lead_id: state.lead_id,\n    project_id: state.project_id, meeting_id: state.meeting_id, brief_id: state.brief_id,\n    current_step: nextStep,\n    step3_score: state.step3_score, step4_score: state.step4_score, step5_score: state.step5_score,\n    first_name: state.first_name, full_name: state.full_name,\n    profile: state.profile, profile_custom_desc: state.profile_custom_desc,\n    element: state.element, custom_project_description: state.custom_project_description,\n    meeting_type: state.meeting_type, proposed_datetime: state.proposed_datetime,\n    meeting_status: state.meeting_status, conversation_status: state.conversation_status,\n    project_status: state.project_status, lead_source: state.lead_source,\n    cancellation_reason: state.cancellation_reason,\n    calendar_conflict: state.calendar_conflict, available_slots: state.available_slots,\n    update_calendar_event: state.update_calendar_event || false,\n    delete_old_brief_email: state.delete_old_brief_email || false,\n    reply_text: replyText, force_reply: false\n  }}];\n}\n\n// ─── ZONA C: STEP HANDLERS ───────────────────────────────────────────────────\n\nfunction handleStep0(state) {\n  var isNew = !state.lead_id || state.lead_id === '';\n  if (isNew) {\n    state.lead_id = String(state.chat_id);\n    state.project_id = generateUUID();\n    state.meeting_id = generateUUID();\n    state.conversation_status = 'Active';\n    return buildAdvance(state, 0, STEP_MESSAGES[0]);\n  }\n  var t = normalize(state.inbound_text);\n  var opt1 = t === '1' || t.indexOf('comencemos') !== -1 || t.indexOf('proyecto') !== -1;\n  var opt2 = t === '2' || t.indexOf('informacion') !== -1 || t.indexOf('general') !== -1;\n  if (opt1) return buildAdvance(state, 1, STEP_MESSAGES[1]);\n  if (opt2) { state.conversation_status = 'Completed'; return buildAdvance(state, 0, INFO_GENERAL_MESSAGE); }\n  return buildForceReply(state, FORCE_REPLIES[0]);\n}\n\nfunction handleStep1(state) {\n  var t = normalize(state.inbound_text);\n  var raw = state.inbound_text.trim();\n  var profileKeywords = {\n    '1': ['arquitecto','disenador','disenador'],\n    '2': ['constructora','contratista'],\n    '3': ['vidrieria','fachadista'],\n    '4': ['otro']\n  };\n  var matched = null;\n  if (t === '1' || t === '2' || t === '3' || t === '4') {\n    matched = t;\n  } else {\n    var keys = Object.keys(profileKeywords);\n    for (var i = 0; i < keys.length; i++) {\n      var kws = profileKeywords[keys[i]];\n      for (var j = 0; j < kws.length; j++) { if (t.indexOf(kws[j]) !== -1) { matched = keys[i]; break; } }\n      if (matched) break;\n    }\n  }\n  if (!matched) return buildForceReply(state, FORCE_REPLIES[1]);\n  if (matched === '4') { state.profile = 'Otro'; state.profile_custom_desc = raw; }\n  else { state.profile = PROFILE_MAP[matched]; state.profile_custom_desc = null; }\n  return buildAdvance(state, 2, STEP_MESSAGES[2]);\n}\n\nfunction handleStep2(state) {\n  var t = normalize(state.inbound_text);\n  var raw = state.inbound_text.trim();\n  if (!raw) return buildForceReply(state, 'Por favor, describe brevemente el proyecto que tienes en mente o selecciona una de las opciones del menú.');\n  var elementKeywords = {\n    '1': ['cancel','bano','regadera','ducha'],\n    '2': ['barandal','balcon','escalera'],\n    '3': ['ventanal','fachada','vidrio','gran escala','proyecto grande']\n  };\n  var matched = null;\n  if (t === '1' || t === '2' || t === '3') {\n    matched = t;\n  } else {\n    var keys = Object.keys(elementKeywords);\n    for (var i = 0; i < keys.length; i++) {\n      var kws = elementKeywords[keys[i]];\n      for (var j = 0; j < kws.length; j++) { if (t.indexOf(kws[j]) !== -1) { matched = keys[i]; break; } }\n      if (matched) break;\n    }\n  }\n  if (matched) { state.element = ELEMENT_MAP[matched]; state.custom_project_description = null; }\n  else { state.element = 'Personalizado'; state.custom_project_description = raw; }\n  return buildAdvance(state, 3, STEP_MESSAGES[3]);\n}\n\nfunction handleStep3(state) {\n  var t = normalize(state.inbound_text);\n  var score = 0;\n  if (t === '1' || t.indexOf('construido') !== -1 || t.indexOf('exactas') !== -1) score = 1;\n  else if (t === '2' || t.indexOf('obra gris') !== -1 || t.indexOf('activa') !== -1 || t.indexOf('planeadas') !== -1) score = 2;\n  else if (t === '3' || t.indexOf('no hay') !== -1 || t.indexOf('planos') !== -1 || t.indexOf('preliminares') !== -1) score = 3;\n  if (!score) return buildForceReply(state, FORCE_REPLIES[3]);\n  state.step3_score = score;\n  return buildAdvance(state, 4, STEP_MESSAGES[4]);\n}\n\nfunction handleStep4(state) {\n  var t = normalize(state.inbound_text);\n  var score = 0;\n  if (t === '1' || t.indexOf('presupuesto') !== -1 || t.indexOf('proveedor') !== -1 || t.indexOf('semana') !== -1) score = 1;\n  else if (t === '2' || t.indexOf('comparando') !== -1 || t.indexOf('opciones') !== -1 || t.indexOf('mes') !== -1) score = 2;\n  else if (t === '3' || t.indexOf('cotizaciones') !== -1 || t.indexOf('futuro') !== -1 || t.indexOf('presupuestar') !== -1) score = 3;\n  if (!score) return buildForceReply(state, FORCE_REPLIES[4]);\n  state.step4_score = score;\n  return buildAdvance(state, 5, STEP_MESSAGES[5]);\n}\n\nfunction handleStep5(state) {\n  var t = normalize(state.inbound_text);\n  var score = 0;\n  if (t === '1' || t.indexOf('inmediato') !== -1 || t.indexOf('dos semanas') !== -1) score = 1;\n  else if (t === '2' || t.indexOf('planificado') !== -1 || t.indexOf('proximas') !== -1) score = 2;\n  else if (t === '3' || t.indexOf('sin fecha') !== -1 || t.indexOf('definida') !== -1 || t.indexOf('avances') !== -1) score = 3;\n  if (!score) return buildForceReply(state, FORCE_REPLIES[5]);\n  state.step5_score = score;\n  var s3 = parseInt(state.step3_score, 10);\n  var s4 = parseInt(state.step4_score, 10);\n  if (s3 === 3 && s4 === 3 && score === 3) {\n    state.project_status = 'Unqualified';\n    state.conversation_status = 'Completed';\n    return buildAdvance(state, 5, DISQUALIFICATION_MESSAGE);\n  }\n  state.project_status = 'Qualified';\n  return buildAdvance(state, 6, STEP_MESSAGES[6]);\n}\n\nfunction handleStep6(state) {\n  var t = normalize(state.inbound_text);\n  var matched = null;\n  if (t === '1' || t.indexOf('virtual') !== -1 || t.indexOf('meet') !== -1) matched = 'Virtual';\n  else if (t === '2' || t.indexOf('presencial') !== -1 || t.indexOf('planta') !== -1) matched = 'Presencial';\n  if (!matched) return buildForceReply(state, FORCE_REPLIES[6]);\n  state.meeting_type = matched;\n  return buildAdvance(state, 7, STEP_MESSAGES[7]);\n}\n\nfunction handleStep7(state) {\n  var today = new Date();\n  var parsed = parseSpanishDate(state.inbound_text, today);\n  if (!parsed.valid) return buildForceReply(state, FORCE_REPLIES['7_format']);\n  if (state.calendar_conflict === true || state.calendar_conflict === 'true') {\n    var slots = (state.available_slots || []).slice(0, 3);\n    var slotStr = slots.map(function(s, i) { return (i + 1) + '️⃣ ' + s; }).join('\\n');\n    return buildForceReply(state, FORCE_REPLIES['7_conflict'].replace('{SLOTS}', slotStr));\n  }\n  state.proposed_datetime = parsed.isoString;\n  return buildAdvance(state, 8, STEP_MESSAGES[8]);\n}\n\nfunction handleStep8(state) {\n  var parsed = parseAttribution(state.inbound_text.trim());\n  if (!parsed) return buildForceReply(state, FORCE_REPLIES[8]);\n  state.full_name = parsed.fullName;\n  state.first_name = parsed.firstName;\n  state.lead_source = parsed.leadSource;\n  state.brief_id = generateUUID();\n  state.conversation_status = 'Completed';\n  state.meeting_status = 'Scheduled';\n  return buildAdvance(state, 9, STEP_MESSAGES[9].replace('{first_name}', state.first_name || 'cliente'));\n}\n\nfunction handleStep9(state) {\n  var t = normalize(state.inbound_text);\n  if (t === '1' || t.indexOf('nuevo proyecto') !== -1) {\n    state.conversation_status = 'Active';\n    state.project_id = generateUUID();\n    state.meeting_id = generateUUID();\n    state.project_status = null; state.brief_id = null; state.meeting_type = null;\n    state.step3_score = null; state.step4_score = null; state.step5_score = null;\n    state.proposed_datetime = null; state.cancellation_reason = null;\n    state.update_calendar_event = false; state.delete_old_brief_email = false;\n    return buildAdvance(state, 0, STEP_MESSAGES[0]);\n  }\n  if (t === '2' || t.indexOf('reagendar') !== -1) return buildAdvance(state, 10, STEP_MESSAGES[10]);\n  if (t === '3' || t.indexOf('cancelar') !== -1) return buildAdvance(state, 13, STEP_MESSAGES[13]);\n  return buildForceReply(state, FORCE_REPLIES[9]);\n}\n\nfunction handleStep10(state) {\n  var t = normalize(state.inbound_text);\n  var matched = null;\n  if (t === '1' || t.indexOf('virtual') !== -1 || t.indexOf('meet') !== -1) matched = 'Virtual';\n  else if (t === '2' || t.indexOf('presencial') !== -1 || t.indexOf('planta') !== -1) matched = 'Presencial';\n  if (!matched) return buildForceReply(state, FORCE_REPLIES[10]);\n  state.meeting_type = matched;\n  return buildAdvance(state, 11, STEP_MESSAGES[11]);\n}\n\nfunction handleStep11(state) {\n  var today = new Date();\n  var parsed = parseSpanishDate(state.inbound_text, today);\n  if (!parsed.valid) return buildForceReply(state, FORCE_REPLIES['7_format']);\n  if (state.calendar_conflict === true || state.calendar_conflict === 'true') {\n    var slots = (state.available_slots || []).slice(0, 3);\n    var slotStr = slots.map(function(s, i) { return (i + 1) + '️⃣ ' + s; }).join('\\n');\n    return buildForceReply(state, FORCE_REPLIES['7_conflict'].replace('{SLOTS}', slotStr));\n  }\n  state.proposed_datetime = parsed.isoString;\n  return buildAdvance(state, 12, STEP_MESSAGES[12]);\n}\n\nfunction handleStep12(state) {\n  var raw = state.inbound_text.trim();\n  if (!raw) return buildForceReply(state, FORCE_REPLIES[12]);\n  state.brief_id = generateUUID();\n  state.update_calendar_event = true;\n  state.delete_old_brief_email = true;\n  state.meeting_status = 'Rescheduled';\n  return buildAdvance(state, 9, STEP_MESSAGES[9].replace('{first_name}', state.first_name || 'cliente'));\n}\n\nfunction handleStep13(state) {\n  var t = normalize(state.inbound_text);\n  var matched = null;\n  if (t === '1' || t.indexOf('proveedor') !== -1 || t.indexOf('mejor') !== -1) matched = 'Encontré un mejor proveedor';\n  else if (t === '2' || t.indexOf('tardado') !== -1 || t.indexOf('proceso') !== -1) matched = 'El proceso es muy tardado';\n  else if (t === '3' || t.indexOf('asistir') !== -1 || t.indexOf('no puedo') !== -1) matched = 'Ya no puedo asistir';\n  if (!matched) return buildForceReply(state, FORCE_REPLIES[13]);\n  state.cancellation_reason = matched;\n  return buildAdvance(state, 14, STEP_MESSAGES[14]);\n}\n\nfunction handleStep14(state) {\n  state.meeting_status = 'Cancelled';\n  state.project_status = 'Cancelled';\n  state.conversation_status = 'Cancelled';\n  return buildAdvance(state, 14, STEP_MESSAGES[14]);\n}\n\n// ─── ZONA D: ROUTER PRINCIPAL ────────────────────────────────────────────────\n\nfunction route(state) {\n  state.inbound_text = (state.inbound_text || '').toString().trim();\n  state.current_step = parseInt(state.current_step, 10) || 0;\n\n  if (!state.lead_id || state.lead_id === '' || state.lead_id === 'null') {\n    state.lead_id = String(state.chat_id);\n    state.project_id = generateUUID();\n    state.meeting_id = generateUUID();\n    state.conversation_status = 'Active';\n    state.current_step = 0;\n    return buildAdvance(state, 0, STEP_MESSAGES[0]);\n  }\n\n  var postFlow = state.conversation_status === 'Completed' || state.conversation_status === 'Cancelled';\n  var restartTrigger = normalize(state.inbound_text) === 'inicio' || state.inbound_text === '1';\n\n  if (postFlow && restartTrigger) {\n    state.current_step = 0; state.conversation_status = 'Active';\n    state.project_id = generateUUID(); state.meeting_id = generateUUID();\n    state.project_status = null; state.brief_id = null; state.meeting_type = null;\n    state.step3_score = null; state.step4_score = null; state.step5_score = null;\n    state.proposed_datetime = null; state.cancellation_reason = null;\n    state.update_calendar_event = false; state.delete_old_brief_email = false;\n    return buildAdvance(state, 0, STEP_MESSAGES[0]);\n  }\n\n  if (postFlow) {\n    return buildForceReply(state, \"Para reactivar la atención o iniciar un nuevo proyecto, escribe la palabra 'Inicio' o el número 1️⃣ en cualquier momento.\");\n  }\n\n  switch (state.current_step) {\n    case 0:  return handleStep0(state);\n    case 1:  return handleStep1(state);\n    case 2:  return handleStep2(state);\n    case 3:  return handleStep3(state);\n    case 4:  return handleStep4(state);\n    case 5:  return handleStep5(state);\n    case 6:  return handleStep6(state);\n    case 7:  return handleStep7(state);\n    case 8:  return handleStep8(state);\n    case 9:  return handleStep9(state);\n    case 10: return handleStep10(state);\n    case 11: return handleStep11(state);\n    case 12: return handleStep12(state);\n    case 13: return handleStep13(state);\n    case 14: return handleStep14(state);\n    default:\n      state.current_step = 0;\n      state.project_id = generateUUID();\n      state.meeting_id = generateUUID();\n      return buildAdvance(state, 0, STEP_MESSAGES[0]);\n  }\n}\n\n// ─── ZONA E: ENTRY POINT n8n ─────────────────────────────────────────────────\n\nvar telegramData = $('Telegram_Webhook').first().json;\nvar leadsData    = $('Sheets_Leads_Lookup').first().json;\n\nvar state = {\n  chat_id:              telegramData.message.chat.id,\n  inbound_text:         telegramData.message.text || '',\n  lead_id:              leadsData.lead_id              || null,\n  current_step:         leadsData.current_step         || 0,\n  conversation_status:  leadsData.conversation_status  || null,\n  project_id:           leadsData.project_id           || null,\n  meeting_id:           leadsData.meeting_id           || null,\n  brief_id:             leadsData.brief_id             || null,\n  step3_score:          leadsData.step3_score           || null,\n  step4_score:          leadsData.step4_score           || null,\n  step5_score:          leadsData.step5_score           || null,\n  first_name:           leadsData.first_name            || null,\n  full_name:            leadsData.name                  || null,\n  profile:              leadsData.profile               || null,\n  profile_custom_desc:  leadsData.profile_custom_desc   || null,\n  element:              leadsData.element_type          || null,\n  custom_project_description: leadsData.custom_project_description || null,\n  meeting_type:         leadsData.meeting_type          || null,\n  proposed_datetime:    leadsData.validated_start_datetime || null,\n  meeting_status:       leadsData.meeting_status        || null,\n  project_status:       leadsData.project_status        || null,\n  lead_source:          leadsData.lead_source            || null,\n  cancellation_reason:  leadsData.cancellation_reason   || null,\n  calendar_conflict:    false,\n  available_slots:      [],\n  update_calendar_event:  false,\n  delete_old_brief_email: false\n};\n\nreturn route(state);"
       },
       "id": "JS_StateMachine_Processor",
       "name": "JS_StateMachine_Processor",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        700,
-        400
-      ]
+      "position": [540, 400]
     },
     {
       "parameters": {
         "conditions": {
-          "options": [
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
             {
-              "condition": "===",
-              "leftValue": "={{$node[\"JS_StateMachine_Processor\"].json.force_reply}}",
-              "rightValue": true
+              "id": "force-reply-check",
+              "leftValue": "={{ $json.force_reply }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
             }
-          ]
-        }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
       "id": "Router_ForceReply",
       "name": "Router_ForceReply",
       "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        900,
-        400
-      ]
+      "typeVersion": 2,
+      "position": [760, 400]
     },
     {
       "parameters": {
         "operation": "upsert",
-        "doc": "1h5P5c_-y9r7mKwzX-2b5c5d5e5f5g5h5i",
-        "range": "Leads!A:H",
-        "options": {
-          "useFirstRowAsHeaders": true,
-          "location": "A1"
+        "documentId": {
+          "mode": "id",
+          "value": "={{ $env.SPREADSHEET_ID }}"
         },
-        "upsertData": {
-          "mode": "autoMapInputData",
+        "sheetName": {
+          "mode": "name",
+          "value": "Leads"
+        },
+        "columns": {
           "mappingMode": "defineBelow",
-          "value": {\n  \"lead_id\": \"={{$node[\"JS_StateMachine_Processor\"].json.lead_id}}\",\n  \"name\": \"={{$node[\"JS_StateMachine_Processor\"].json.full_name}}\",\n  \"first_name\": \"={{$node[\"JS_StateMachine_Processor\"].json.first_name}}\",\n  \"profile\": \"={{$node[\"JS_StateMachine_Processor\"].json.profile}}\",\n  \"profile_custom_desc\": \"={{$node[\"JS_StateMachine_Processor\"].json.profile_custom_desc}}\",\n  \"lead_source\": \"={{$node[\"JS_StateMachine_Processor\"].json.lead_source}}\",\n  \"current_step\": \"={{$node[\"JS_StateMachine_Processor\"].json.current_step}}\",\n  \"conversation_status\": \"={{$node[\"JS_StateMachine_Processor\"].json.conversation_status}}\",\n  \"updated_at\": \"={{now()}}\"\n        }\n      },
+          "value": {
+            "lead_id":             "={{ $('JS_StateMachine_Processor').first().json.lead_id }}",
+            "name":                "={{ $('JS_StateMachine_Processor').first().json.full_name }}",
+            "first_name":          "={{ $('JS_StateMachine_Processor').first().json.first_name }}",
+            "profile":             "={{ $('JS_StateMachine_Processor').first().json.profile }}",
+            "profile_custom_desc": "={{ $('JS_StateMachine_Processor').first().json.profile_custom_desc }}",
+            "lead_source":         "={{ $('JS_StateMachine_Processor').first().json.lead_source }}",
+            "current_step":        "={{ $('JS_StateMachine_Processor').first().json.current_step }}",
+            "conversation_status": "={{ $('JS_StateMachine_Processor').first().json.conversation_status }}",
+            "updated_at":          "={{ $now }}"
+          },
+          "matchingColumns": ["lead_id"]
+        },
+        "options": {}
+      },
       "id": "Sheets_Leads_Upsert",
       "name": "Sheets_Leads_Upsert",
       "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 3,
-      "position": [
-        1100,
-        200
-      ],
+      "typeVersion": 4.5,
+      "position": [980, 280],
       "credentials": {
-        "googleSheetsOAuth2": "Google_Sheets_Auth"
+        "googleSheetsOAuth2Api": {
+          "id": "Google_Sheets_Auth",
+          "name": "Google Sheets Auth"
+        }
       }
     },
     {
       "parameters": {
-        "operation": "upsert",\n        \"doc\": \"1h5P5c_-y9r7mKwzX-2b5c5d5e5f5g5h5i\",\n        \"range\": \"Projects!A:G\",\n        \"options\": {\n          \"useFirstRowAsHeaders\": true,\n          \"location\": \"A1\"\n        },\n        \"upsertData\": {\n          \"mode\": \"autoMapInputData\",\n          \"mappingMode\": \"defineBelow\",\n          \"value\": {\n            \"project_id\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.project_id}}\",\n            \"lead_id\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.lead_id}}\",\n            \"element_type\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.element}}\",\n            \"custom_project_description\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.custom_project_description}}\",\n            \"technical_viability_score\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.step3_score}}\",\n            \"purchase_intent_score\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.step4_score}}\",\n            \"urgency_score\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.step5_score}}\",\n            \"project_status\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.project_status}}\",\n            \"created_at\": \"={{now()}}\"\n          }\n        }\n      },\n      \"id\": \"Sheets_Projects_Upsert\",\n      \"name\": \"Sheets_Projects_Upsert\",\n      \"type\": \"n8n-nodes-base.googleSheets\",\n      \"typeVersion\": 3,\n      \"position\": [\n        1100,\n        350\n      ],\n      \"credentials\": {\n        \"googleSheetsOAuth2\": \"Google_Sheets_Auth\"\n      }\n    },\n    {\n      \"parameters\": {\n        \"operation\": \"upsert\",\n        \"doc\": \"1h5P5c_-y9r7mKwzX-2b5c5d5e5f5g5h5i\",\n        \"range\": \"Meetings!A:I\",\n        \"options\": {\n          \"useFirstRowAsHeaders\": true,\n          \"location\": \"A1\"\n        },\n        \"upsertData\": {\n          \"mode\": \"autoMapInputData\",\n          \"mappingMode\": \"defineBelow\",\n          \"value\": {\n            \"meeting_id\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.meeting_id}}\",\n            \"lead_id\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.lead_id}}\",\n            \"project_id\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.project_id}}\",\n            \"meeting_type\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.meeting_type}}\",\n            \"user_raw_date_string\": \"={{$node[\\\"Telegram_Webhook\\\"].json.message.text}}\",\n            \"validated_start_datetime\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.proposed_datetime}}\",\n            \"validated_end_datetime\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.proposed_datetime}}\",\n            \"calendar_event_id\": \"\",\n            \"meeting_status\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.meeting_status}}\",\n            \"cancellation_reason\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.cancellation_reason}}\",\n            \"created_at\": \"={{now()}}\"\n          }\n        }\n      },\n      \"id\": \"Sheets_Meetings_Upsert\",\n      \"name\": \"Sheets_Meetings_Upsert\",\n      \"type\": \"n8n-nodes-base.googleSheets\",\n      \"typeVersion\": 3,\n      \"position\": [\n        1100,\n        500\n      ],\n      \"credentials\": {\n        \"googleSheetsOAuth2\": \"Google_Sheets_Auth\"\n      }\n    },\n    {\n      \"parameters\": {\n        \"conditions\": {\n          \"options\": [\n            {\n              \"condition\": \"===\",\n              \"leftValue\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.update_calendar_event}}\",\n              \"rightValue\": true\n            }\n          ]\n        }\n      },\n      \"id\": \"Router_Calendar_Update\",\n      \"name\": \"Router_Calendar_Update\",\n      \"type\": \"n8n-nodes-base.if\",\n      \"typeVersion\": 1,\n      \"position\": [\n        1300,\n        500\n      ]\n    },\n    {\n      \"parameters\": {\n        \"operation\": \"update\",\n        \"calendarId\": \"primary\",\n        \"eventId\": \"={{$node[\\\"Sheets_Meetings_Upsert\\\"].json.calendar_event_id}}\",\n        \"title\": \"{{$node[\\\"JS_StateMachine_Processor\\\"].json.meeting_type}} - Cita AVA\",\n        \"description\": \"Reagendada por el usuario. Meeting ID: {{$node[\\\"JS_StateMachine_Processor\\\"].json.meeting_id}}\",\n        \"start\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.proposed_datetime}}\",\n        \"end\": \"={{new Date($node[\\\"JS_StateMachine_Processor\\\"].json.proposed_datetime).getTime() + 3600000}}\",\n        \"options\": {}\n      },\n      \"id\": \"Calendar_Event_Manager\",\n      \"name\": \"Calendar_Event_Manager\",\n      \"type\": \"n8n-nodes-base.googleCalendar\",\n      \"typeVersion\": 3,\n      \"position\": [\n        1500,\n        500\n      ],\n      \"credentials\": {\n        \"googleCalendarOAuth2\": \"Google_Calendar_Auth\"\n      }\n    },\n    {\n      \"parameters\": {\n        \"conditions\": {\n          \"options\": [\n            {\n              \"condition\": \"===\",\n              \"leftValue\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.delete_old_brief_email}}\",\n              \"rightValue\": true\n            }\n          ]\n        }\n      },\n      \"id\": \"Router_Delete_Old_Brief\",\n      \"name\": \"Router_Delete_Old_Brief\",\n      \"type\": \"n8n-nodes-base.if\",\n      \"typeVersion\": 1,\n      \"position\": [\n        1300,\n        650\n      ]\n    },\n    {\n      \"parameters\": {\n        \"operation\": \"delete\",\n        \"messageId\": \"\",\n        \"options\": {\n          \"permanent\": true\n        }\n      },\n      \"id\": \"Gmail_Old_Brief_Delete\",\n      \"name\": \"Gmail_Old_Brief_Delete\",\n      \"type\": \"n8n-nodes-base.gmail\",\n      \"typeVersion\": 3,\n      \"position\": [\n        1500,\n        650\n      ],\n      \"credentials\": {\n        \"googleGmailOAuth2\": \"Google_Gmail_Auth\"\n      }\n    },\n    {\n      \"parameters\": {\n        \"htmlBody\": \"<html><body><h2>📋 NUEVA CITACIÓN COMERCIAL ASIGNADA - AVA SYSTEMS</h2><p><strong>Lead:</strong> {{$node[\\\"JS_StateMachine_Processor\\\"].json.first_name}} {{$node[\\\"JS_StateMachine_Processor\\\"].json.full_name}}</p><p><strong>Perfil:</strong> {{$node[\\\"JS_StateMachine_Processor\\\"].json.profile}}</p><p><strong>Proyecto:</strong> {{$node[\\\"JS_StateMachine_Processor\\\"].json.element}}</p><p><strong>Tipo de Reunión:</strong> {{$node[\\\"JS_StateMachine_Processor\\\"].json.meeting_type}}</p><p><strong>Fecha y Hora Propuesta:</strong> {{$node[\\\"JS_StateMachine_Processor\\\"].json.proposed_datetime}}</p><p><strong>Fuente del Lead:</strong> {{$node[\\\"JS_StateMachine_Processor\\\"].json.lead_source}}</p><p><strong>Brief ID:</strong> {{$node[\\\"JS_StateMachine_Processor\\\"].json.brief_id}}</p><hr><p>Datos técnicos de calificación:</p><ul><li>Viabilidad técnica (Step 3): {{$node[\\\"JS_StateMachine_Processor\\\"].json.step3_score}}</li><li>Intención de compra (Step 4): {{$node[\\\"JS_StateMachine_Processor\\\"].json.step4_score}}</li><li>Urgencia (Step 5): {{$node[\\\"JS_StateMachine_Processor\\\"].json.step5_score}}</li></ul></body></html>\",\n        \"subject\": \"AVA SYSTEMS - Nueva Cita: {{$node[\\\"JS_StateMachine_Processor\\\"].json.first_name}}\",\n        \"toEmail\": \"A01769514@tec.mx\",\n        \"options\": {}\n      },\n      \"id\": \"Gmail_Sales_Brief_Sender\",\n      \"name\": \"Gmail_Sales_Brief_Sender\",\n      \"type\": \"n8n-nodes-base.gmail\",\n      \"typeVersion\": 3,\n      \"position\": [\n        1500,\n        800\n      ],\n      \"credentials\": {\n        \"googleGmailOAuth2\": \"Google_Gmail_Auth\"\n      }\n    },\n    {\n      \"parameters\": {\n        \"chatId\": \"={{$node[\\\"Telegram_Webhook\\\"].json.message.chat.id}}\",\n        \"text\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.reply_text}}\",\n        \"parseMode\": \"HTML\",\n        \"options\": {}\n      },\n      \"id\": \"Telegram_Message_Sender\",\n      \"name\": \"Telegram_Message_Sender\",\n      \"type\": \"n8n-nodes-base.telegram\",\n      \"typeVersion\": 1,\n      \"position\": [\n        1100,\n        800\n      ],\n      \"credentials\": {\n        \"telegramBotApi\": \"Telegram_Bot_Token\"\n      }\n    },\n    {\n      \"parameters\": {\n        \"operation\": \"upsert\",\n        \"doc\": \"1h5P5c_-y9r7mKwzX-2b5c5d5e5f5g5h5i\",\n        \"range\": \"Briefs!A:G\",\n        \"options\": {\n          \"useFirstRowAsHeaders\": true,\n          \"location\": \"A1\"\n        },\n        \"upsertData\": {\n          \"mode\": \"autoMapInputData\",\n          \"mappingMode\": \"defineBelow\",\n          \"value\": {\n            \"brief_id\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.brief_id}}\",\n            \"lead_id\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.lead_id}}\",\n            \"project_id\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.project_id}}\",\n            \"meeting_id\": \"={{$node[\\\"JS_StateMachine_Processor\\\"].json.meeting_id}}\",\n            \"compiled_brief_markdown\": \"**Brief AVA - {{$node[\\\"JS_StateMachine_Processor\\\"].json.first_name}}**\\n\\nStatus: {{$node[\\\"JS_StateMachine_Processor\\\"].json.meeting_status}}\\n\\nNota generada automáticamente.\",\n            \"emailed_to\": \"A01769514@tec.mx\",\n            \"sent_at\": \"={{now()}}\"\n          }\n        }\n      },\n      \"id\": \"Sheets_Briefs_Upsert\",\n      \"name\": \"Sheets_Briefs_Upsert\",\n      \"type\": \"n8n-nodes-base.googleSheets\",\n      \"typeVersion\": 3,\n      \"position\": [\n        1100,\n        950\n      ],\n      \"credentials\": {\n        \"googleSheetsOAuth2\": \"Google_Sheets_Auth\"\n      }\n    }\n  ],\n  \"connections\": {\n    \"Telegram_Webhook\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Sheets_Leads_Lookup\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Sheets_Leads_Lookup\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Filter_Existing_Lead\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Filter_Existing_Lead\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"JS_StateMachine_Processor\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"JS_StateMachine_Processor\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Router_ForceReply\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Router_ForceReply\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Telegram_Message_Sender\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ],\n        [\n          {\n            \"node\": \"Sheets_Leads_Upsert\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Sheets_Leads_Upsert\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Sheets_Projects_Upsert\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Sheets_Projects_Upsert\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Sheets_Meetings_Upsert\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Sheets_Meetings_Upsert\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Router_Calendar_Update\",\n            \"type\": \"main\",\n            \"index\": 0\n          },\n          {\n            \"node\": \"Router_Delete_Old_Brief\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Router_Calendar_Update\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Calendar_Event_Manager\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ],\n        []\n      ]\n    },\n    \"Router_Delete_Old_Brief\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Gmail_Old_Brief_Delete\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ],\n        []\n      ]\n    },\n    \"Gmail_Old_Brief_Delete\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Gmail_Sales_Brief_Sender\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Gmail_Sales_Brief_Sender\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Sheets_Briefs_Upsert\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Telegram_Message_Sender\": {\n      \"main\": [\n        []\n      ]\n    },\n    \"Sheets_Briefs_Upsert\": {\n      \"main\": [\n        []\n      ]\n    }\n  },\n  \"active\": true,\n  \"settings\": {\n    \"saveManualExecutions\": true,\n    \"timezone\": \"America/Mexico_City\",\n    \"executionOrder\": \"v1\"\n  }\n}\n
+        "operation": "upsert",
+        "documentId": {
+          "mode": "id",
+          "value": "={{ $env.SPREADSHEET_ID }}"
+        },
+        "sheetName": {
+          "mode": "name",
+          "value": "Projects"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "project_id":                   "={{ $('JS_StateMachine_Processor').first().json.project_id }}",
+            "lead_id":                       "={{ $('JS_StateMachine_Processor').first().json.lead_id }}",
+            "element_type":                  "={{ $('JS_StateMachine_Processor').first().json.element }}",
+            "custom_project_description":    "={{ $('JS_StateMachine_Processor').first().json.custom_project_description }}",
+            "technical_viability_score":     "={{ $('JS_StateMachine_Processor').first().json.step3_score }}",
+            "purchase_intent_score":         "={{ $('JS_StateMachine_Processor').first().json.step4_score }}",
+            "urgency_score":                 "={{ $('JS_StateMachine_Processor').first().json.step5_score }}",
+            "project_status":                "={{ $('JS_StateMachine_Processor').first().json.project_status }}",
+            "created_at":                    "={{ $now }}"
+          },
+          "matchingColumns": ["project_id"]
+        },
+        "options": {}
+      },
+      "id": "Sheets_Projects_Upsert",
+      "name": "Sheets_Projects_Upsert",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [980, 420],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Google_Sheets_Auth",
+          "name": "Google Sheets Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "documentId": {
+          "mode": "id",
+          "value": "={{ $env.SPREADSHEET_ID }}"
+        },
+        "sheetName": {
+          "mode": "name",
+          "value": "Meetings"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "meeting_id":               "={{ $('JS_StateMachine_Processor').first().json.meeting_id }}",
+            "lead_id":                   "={{ $('JS_StateMachine_Processor').first().json.lead_id }}",
+            "project_id":                "={{ $('JS_StateMachine_Processor').first().json.project_id }}",
+            "meeting_type":              "={{ $('JS_StateMachine_Processor').first().json.meeting_type }}",
+            "user_raw_date_string":      "={{ $('Telegram_Webhook').first().json.message.text }}",
+            "validated_start_datetime":  "={{ $('JS_StateMachine_Processor').first().json.proposed_datetime }}",
+            "validated_end_datetime":    "={{ $('JS_StateMachine_Processor').first().json.proposed_datetime }}",
+            "calendar_event_id":         "",
+            "meeting_status":            "={{ $('JS_StateMachine_Processor').first().json.meeting_status }}",
+            "cancellation_reason":       "={{ $('JS_StateMachine_Processor').first().json.cancellation_reason }}",
+            "created_at":                "={{ $now }}"
+          },
+          "matchingColumns": ["meeting_id"]
+        },
+        "options": {}
+      },
+      "id": "Sheets_Meetings_Upsert",
+      "name": "Sheets_Meetings_Upsert",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [980, 560],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Google_Sheets_Auth",
+          "name": "Google Sheets Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "calendar-update-check",
+              "leftValue": "={{ $('JS_StateMachine_Processor').first().json.update_calendar_event }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "Router_Calendar_Update",
+      "name": "Router_Calendar_Update",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1200, 560]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendarId": {
+          "mode": "id",
+          "value": "primary"
+        },
+        "eventId": "={{ $('Sheets_Meetings_Upsert').first().json.calendar_event_id }}",
+        "updateFields": {
+          "summary": "={{ $('JS_StateMachine_Processor').first().json.meeting_type }} - Cita AVA SYSTEMS",
+          "description": "Reagendada por el usuario vía AVA Bot.\n\nLead: {{ $('JS_StateMachine_Processor').first().json.full_name }}\nMeeting ID: {{ $('JS_StateMachine_Processor').first().json.meeting_id }}",
+          "start": "={{ $('JS_StateMachine_Processor').first().json.proposed_datetime }}",
+          "end": "={{ new Date(new Date($('JS_StateMachine_Processor').first().json.proposed_datetime).getTime() + 3600000).toISOString() }}"
+        }
+      },
+      "id": "Calendar_Event_Manager",
+      "name": "Calendar_Event_Manager",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.1,
+      "position": [1420, 480],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "Google_Calendar_Auth",
+          "name": "Google Calendar Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "delete-brief-check",
+              "leftValue": "={{ $('JS_StateMachine_Processor').first().json.delete_old_brief_email }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "Router_Delete_Old_Brief",
+      "name": "Router_Delete_Old_Brief",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1200, 700]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 1,
+        "filters": {
+          "q": "subject:\"AVA SYSTEMS\" {{ $('JS_StateMachine_Processor').first().json.brief_id }}"
+        },
+        "options": {}
+      },
+      "id": "Gmail_Search_Old_Brief",
+      "name": "Gmail_Search_Old_Brief",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1420, 700],
+      "credentials": {
+        "googleGmailOAuth2Api": {
+          "id": "Google_Gmail_Auth",
+          "name": "Google Gmail Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "messageId": "={{ $json.id }}",
+        "options": {
+          "permanent": true
+        }
+      },
+      "id": "Gmail_Old_Brief_Delete",
+      "name": "Gmail_Old_Brief_Delete",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1640, 700],
+      "credentials": {
+        "googleGmailOAuth2Api": {
+          "id": "Google_Gmail_Auth",
+          "name": "Google Gmail Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "A01769514@tec.mx",
+        "subject": "={{ $('JS_StateMachine_Processor').first().json.meeting_status === 'Rescheduled' ? '⚠️ REUNIÓN REAGENDADA POR EL USUARIO - ENTRADA ACTUALIZADA EN CRM' : '📋 NUEVA CITACIÓN COMERCIAL ASIGNADA - AVA SYSTEMS' }}",
+        "message": "={{ $('JS_StateMachine_Processor').first().json.meeting_status === 'Rescheduled' ? '⚠️ REUNIÓN REAGENDADA POR EL USUARIO - ENTRADA ACTUALIZADA EN CRM' : '📋 NUEVA CITACIÓN COMERCIAL ASIGNADA - AVA SYSTEMS' }}",
+        "options": {
+          "appendAttribution": false,
+          "bodyContentType": "html",
+          "htmlBody": "<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px;background:#f9f9f9\"><div style=\"background:white;border-radius:8px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,0.08)\"><h2 style=\"color:#1a1a2e;border-bottom:2px solid #e8e8e8;padding-bottom:12px\">{{ $('JS_StateMachine_Processor').first().json.meeting_status === 'Rescheduled' ? '⚠️ REUNIÓN REAGENDADA POR EL USUARIO' : '📋 NUEVA CITACIÓN COMERCIAL ASIGNADA' }}</h2><p style=\"color:#555;font-size:14px\">Sistema AVA — {{ $now.format('DD/MM/YYYY HH:mm') }}</p><table style=\"width:100%;border-collapse:collapse;margin-top:20px\"><tr><td style=\"padding:10px;border-bottom:1px solid #eee;font-weight:bold;width:40%;color:#333\">Nombre del Lead</td><td style=\"padding:10px;border-bottom:1px solid #eee;color:#555\">{{ $('JS_StateMachine_Processor').first().json.full_name }}</td></tr><tr><td style=\"padding:10px;border-bottom:1px solid #eee;font-weight:bold;color:#333\">Perfil Comercial</td><td style=\"padding:10px;border-bottom:1px solid #eee;color:#555\">{{ $('JS_StateMachine_Processor').first().json.profile }}</td></tr><tr><td style=\"padding:10px;border-bottom:1px solid #eee;font-weight:bold;color:#333\">Tipo de Proyecto</td><td style=\"padding:10px;border-bottom:1px solid #eee;color:#555\">{{ $('JS_StateMachine_Processor').first().json.element }}</td></tr><tr><td style=\"padding:10px;border-bottom:1px solid #eee;font-weight:bold;color:#333\">Formato de Reunión</td><td style=\"padding:10px;border-bottom:1px solid #eee;color:#555\">{{ $('JS_StateMachine_Processor').first().json.meeting_type }}</td></tr><tr><td style=\"padding:10px;border-bottom:1px solid #eee;font-weight:bold;color:#333\">Estado del Lead</td><td style=\"padding:10px;border-bottom:1px solid #eee;color:#555\">{{ $('JS_StateMachine_Processor').first().json.meeting_status }}</td></tr><tr><td style=\"padding:10px;border-bottom:1px solid #eee;font-weight:bold;color:#333\">Fuente de Captación</td><td style=\"padding:10px;border-bottom:1px solid #eee;color:#555\">{{ $('JS_StateMachine_Processor').first().json.lead_source }}</td></tr><tr style=\"background:#f0f8ff\"><td style=\"padding:10px;font-weight:bold;color:#1a1a2e\">Viabilidad Técnica</td><td style=\"padding:10px;color:#555\">{{ $('JS_StateMachine_Processor').first().json.step3_score === 1 ? 'Ya construido — medidas exactas disponibles' : $('JS_StateMachine_Processor').first().json.step3_score === 2 ? 'En obra gris — medidas planeadas' : 'Sin construcción física — solo planos/ideas' }}</td></tr><tr style=\"background:#f0f8ff\"><td style=\"padding:10px;font-weight:bold;color:#1a1a2e\">Intención de Compra</td><td style=\"padding:10px;color:#555\">{{ $('JS_StateMachine_Processor').first().json.step4_score === 1 ? 'Presupuesto listo — elige proveedor esta semana' : $('JS_StateMachine_Processor').first().json.step4_score === 2 ? 'Comparando opciones este mes' : 'Solo cotizando para futuro' }}</td></tr><tr style=\"background:#f0f8ff\"><td style=\"padding:10px;font-weight:bold;color:#1a1a2e\">Urgencia de Entrega</td><td style=\"padding:10px;color:#555\">{{ $('JS_StateMachine_Processor').first().json.step5_score === 1 ? 'Inmediato — menos de 2 semanas' : $('JS_StateMachine_Processor').first().json.step5_score === 2 ? 'Planificado para este mes' : 'Sin fecha definida' }}</td></tr></table><div style=\"margin-top:24px;padding:16px;background:#f8f0ff;border-left:4px solid #7c3aed;border-radius:4px\"><p style=\"margin:0;font-size:12px;color:#555\">Brief ID: {{ $('JS_StateMachine_Processor').first().json.brief_id }} | Lead ID: {{ $('JS_StateMachine_Processor').first().json.lead_id }}</p></div></div></body></html>"
+        }
+      },
+      "id": "Gmail_Sales_Brief_Sender",
+      "name": "Gmail_Sales_Brief_Sender",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1640, 860],
+      "credentials": {
+        "googleGmailOAuth2Api": {
+          "id": "Google_Gmail_Auth",
+          "name": "Google Gmail Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "documentId": {
+          "mode": "id",
+          "value": "={{ $env.SPREADSHEET_ID }}"
+        },
+        "sheetName": {
+          "mode": "name",
+          "value": "Briefs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "brief_id":                "={{ $('JS_StateMachine_Processor').first().json.brief_id }}",
+            "lead_id":                  "={{ $('JS_StateMachine_Processor').first().json.lead_id }}",
+            "project_id":               "={{ $('JS_StateMachine_Processor').first().json.project_id }}",
+            "meeting_id":               "={{ $('JS_StateMachine_Processor').first().json.meeting_id }}",
+            "compiled_brief_markdown":  "={{ '**Brief AVA — ' + $('JS_StateMachine_Processor').first().json.full_name + '**\\n\\nStatus: ' + $('JS_StateMachine_Processor').first().json.meeting_status + '\\nPerfil: ' + $('JS_StateMachine_Processor').first().json.profile + '\\nProyecto: ' + $('JS_StateMachine_Processor').first().json.element + '\\nFuente: ' + $('JS_StateMachine_Processor').first().json.lead_source }}",
+            "emailed_to":               "A01769514@tec.mx",
+            "sent_at":                  "={{ $now }}"
+          },
+          "matchingColumns": ["brief_id"]
+        },
+        "options": {}
+      },
+      "id": "Sheets_Briefs_Upsert",
+      "name": "Sheets_Briefs_Upsert",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1860, 860],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Google_Sheets_Auth",
+          "name": "Google Sheets Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram_Webhook').first().json.message.chat.id }}",
+        "text": "={{ $('JS_StateMachine_Processor').first().json.reply_text }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "Telegram_Message_Sender",
+      "name": "Telegram_Message_Sender",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [980, 700],
+      "credentials": {
+        "telegramApi": {
+          "id": "Telegram_Bot_Token",
+          "name": "Telegram Bot Token"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram_Webhook": {
+      "main": [
+        [
+          { "node": "Sheets_Leads_Lookup", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Sheets_Leads_Lookup": {
+      "main": [
+        [
+          { "node": "JS_StateMachine_Processor", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "JS_StateMachine_Processor": {
+      "main": [
+        [
+          { "node": "Router_ForceReply", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Router_ForceReply": {
+      "main": [
+        [
+          { "node": "Telegram_Message_Sender", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Sheets_Leads_Upsert", "type": "main", "index": 0 },
+          { "node": "Sheets_Projects_Upsert", "type": "main", "index": 0 },
+          { "node": "Sheets_Meetings_Upsert", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Sheets_Meetings_Upsert": {
+      "main": [
+        [
+          { "node": "Router_Calendar_Update", "type": "main", "index": 0 },
+          { "node": "Router_Delete_Old_Brief", "type": "main", "index": 0 },
+          { "node": "Gmail_Sales_Brief_Sender", "type": "main", "index": 0 },
+          { "node": "Telegram_Message_Sender", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Router_Calendar_Update": {
+      "main": [
+        [
+          { "node": "Calendar_Event_Manager", "type": "main", "index": 0 }
+        ],
+        []
+      ]
+    },
+    "Router_Delete_Old_Brief": {
+      "main": [
+        [
+          { "node": "Gmail_Search_Old_Brief", "type": "main", "index": 0 }
+        ],
+        []
+      ]
+    },
+    "Gmail_Search_Old_Brief": {
+      "main": [
+        [
+          { "node": "Gmail_Old_Brief_Delete", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Gmail_Sales_Brief_Sender": {
+      "main": [
+        [
+          { "node": "Sheets_Briefs_Upsert", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "America/Mexico_City"
+  },
+  "staticData": null,
+  "tags": [],
+  "active": false
+}
