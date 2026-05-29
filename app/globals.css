@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  /* AVA Systems Navy Blue Identity */
+  --color-brand: #0A192F;
+  --color-brand-mid: #112240;
+  --color-brand-light: #E8EDF5;
+  --color-brand-accent: #1D6FA4;
+  --color-brand-accent-hover: #155882;
+
+  /* Surfaces */
+  --color-slate-bg: #F8FAFC;
+  --color-card: #FFFFFF;
+  --color-border: rgba(10,25,47,0.1);
+  --color-border-strong: rgba(10,25,47,0.22);
+  --color-sidebar-bg: #0A192F;
+  --color-sidebar-hover: #112240;
+  --color-sidebar-active: #1D6FA4;
+
+  /* Typography */
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94A3B8;
+  --color-text-inverse: #F1F5F9;
+  --color-text-inverse-muted: #94A3B8;
+
+  /* Status */
+  --color-success: #059669;
+  --color-warning: #D97706;
+  --color-danger: #DC2626;
+  --color-info: #0284C7;
+
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-display: "Syne", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-elevated: 0 4px 20px -2px rgb(0 0 0 / 0.12);
+  --shadow-sidebar: 2px 0 12px 0 rgb(0 0 0 / 0.15);
+}
